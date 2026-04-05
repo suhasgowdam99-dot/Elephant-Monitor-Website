@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ESSENTIAL META TAGS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PRIMARY SEO TAGS -->
+    <title>Elephant Detection System - Farm Protection & Alerts | Elephant Monitor</title>
+    <meta name="description" content="Real-time elephant detection system for farm protection. Get instant alerts when elephants are detected nearby. Bilingual support in English and Kannada. Perfect for protecting your crops and livestock.">
+    <meta name="keywords" content="elephant detection, farm protection, wildlife monitoring, animal detection system, elephant alert, crop protection, Kannada">
+    <meta name="author" content="Elephant Monitor">
+    <meta name="language" content="English, Kannada">
+    
+    <!-- OPEN GRAPH TAGS (For Social Media) -->
+    <meta property="og:title" content="🐘 Elephant Detection System - Protect Your Farm">
+    <meta property="og:description" content="Real-time elephant detection with instant alerts. Bilingual support. Keep your farm safe 24/7.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1200&q=80">
+    <meta property="og:url" content="https://elephant-monitor.vercel.app/">
+    <meta property="og:type" content="website">
+    
+    <!-- TWITTER CARD TAGS -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Elephant Detection System">
+    <meta name="twitter:description" content="Real-time farm protection with elephant detection alerts">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1200&q=80">
+    
+    <!-- CANONICAL TAG (Prevents duplicate content issues) -->
+    <link rel="canonical" href="https://elephant-monitor.vercel.app/">
+    
+    <!-- FAVICON -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🐘</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🐘</text></svg>">
+    
+    <!-- GOOGLE SITE VERIFICATION (Add your verification code here) -->
+    <!-- <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE"> -->
+    
+    <!-- ROBOTS META TAG -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    <!-- THEME COLOR -->
+    <meta name="theme-color" content="#4CAF50">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans Kannada', 'Arial', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 40, 10, 0.55);
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== HEADER WITH LOGO ===== */
+        .header {
+            background: transparent;
+            border-radius: 15px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-btn {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s, filter 0.2s;
+        }
+
+        .logo-btn:hover { transform: scale(1.06); }
+        .logo-btn:active { transform: scale(0.96); }
+
+        .logo-wrap {
+            width: 108px;
+            height: 108px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 18px rgba(200,80,0,0.55);
+        }
+
+        .logo-wrap img {
+            width: 190px;
+            height: 190px;
+            object-fit: cover;
+            object-position: center center;
+            margin-top: -20px;
+            margin-left: -41px;
+            display: block;
+        }
+
+        .header-text {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-text h1 {
+            font-size: 1.8em;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            margin-bottom: 6px;
+        }
+
+        .lang-toggle {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .lang-toggle:active { background: #45a049; }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .card h2 {
+            color: #ffffff;
+            font-size: 1.6em;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .loading, .dashboard, .configMsg { display: none; }
+
+        .status-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .status-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.95em;
+        }
+
+        .status-value {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .status-danger { color: #ff4444; }
+        .status-safe { color: #4CAF50; }
+
+        .elephant-icon {
+            font-size: 3em;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .alert-box {
+            background: rgba(255,68,68,0.1);
+            border: 2px solid rgba(255,68,68,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-box.active {
+            display: block;
+            animation: pulse 0.6s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .alert-title {
+            color: #ff4444;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .alert-text {
+            color: #ffcccc;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .helpline-section {
+            margin-top: 30px;
+        }
+
+        .helpline-title {
+            color: #ffffff;
+            font-size: 1.4em;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .helpline-subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95em;
+            margin-bottom: 20px;
+        }
+
+        .helpline-container {
+            display: grid;
+            gap: 12px;
+        }
+
+        .helpline-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .helpline-item.red-border { border-left-color: #ff4444; }
+        .helpline-item.blue-border { border-left-color: #2196F3; }
+        .helpline-item.orange-border { border-left-color: #FF9800; }
+
+        .helpline-info {
+            flex: 1;
+        }
+
+        .helpline-name {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .helpline-name-kn {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85em;
+        }
+
+        .helpline-number {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .call-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .call-btn:hover { background: #45a049; }
+        .call-btn.red-btn { background: #ff4444; }
+        .call-btn.red-btn:hover { background: #ee3333; }
+        .call-btn.blue-btn { background: #2196F3; }
+        .call-btn.blue-btn:hover { background: #0b7dda; }
+        .call-btn.orange-btn { background: #FF9800; }
+        .call-btn.orange-btn:hover { background: #e68900; }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .header { flex-direction: column; }
+            .logo-wrap { width: 90px; height: 90px; }
+            .header-text h1 { font-size: 1.5em; }
+            .card { padding: 18px; }
+            .elephant-icon { font-size: 2.5em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="logo-btn" onclick="alert('Elephant Monitor v1.0')">
+            <div class="logo-wrap">
+                <img src="https://cdn-icons-png.flaticon.com/512/2976/2976629.png" alt="Elephant Detection System Logo" />
+            </div>
+        </button>
+        <div class="header-text">
+            <h1 id="mainTitle">🐘 ಆನೆ ಪತ್ತೆ ವ್ಯವಸ್ಥೆ</h1>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.95em;" id="subtitle">ನಿಮ್ಮ ಹೊಲದ ಸುರಕ್ಷತೆ</p>
+            <button class="lang-toggle" id="langBtn" onclick="toggleLanguage()">Switch to English</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div id="alertBox" class="alert-box">
+            <div class="alert-title" id="alertTitle">⚠️ ಎಚ್ಚರಿಕೆ! ⚠️</div>
+            <div class="alert-text" id="alertText">ಆನೆ ಹತ್ತಿರ ಬಂದಿದೆ!</div>
+        </div>
+
+        <div class="elephant-icon" id="elephantIcon">✅</div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="status-label" id="statusTitle">ಪರಿಸ್ಥಿತಿ</div>
+            <div class="status-value status-safe" id="statusText">ಸುರಕ್ಷಿತ - ಆನೆ ಇಲ್ಲ</div>
+        </div>
+
+        <div id="loading" class="loading">
+            <p style="color: rgba(255,255,255,0.8); text-align: center;" id="loadingText">ಡೇಟಾ ಲೋಡ್ ಆಗುತ್ತಿದೆ...</p>
+        </div>
+
+        <div id="dashboard" class="dashboard">
+            <div class="status-box">
+                <span class="status-label" id="distanceTitle">ದೂರ</span>
+                <span class="status-value"><span id="distanceValue">--</span> <span id="distanceUnit">ಸೆಂಟಿಮೀಟರ್</span></span>
+            </div>
+
+            <div class="status-box">
+                <span class="status-label" id="systemLabel">ವ್ಯವಸ್ಥೆ</span>
+                <span class="status-value" id="systemValue">ಸಕ್ರಿಯ</span>
+            </div>
+
+            <div class="status-box">
+                <span class="status-label" id="updateLabel">ಕೊನೆಯ ನವೀಕರಣ</span>
+                <span class="status-value" id="updateValue">--:--:--</span>
+            </div>
+
+            <div class="status-box">
+                <span class="status-label" id="locationLabel">ಸ್ಥಳ</span>
+                <span class="status-value" id="locationValue">ಹೊಲದ ಸುತ್ತಲೂ</span>
+            </div>
+        </div>
+
+        <div id="configMsg" style="display: none; text-align: center;">
+            <p style="color: #ffcc00;" id="configText">⚙️ ದಯವಿಟ್ಟು Channel ID ಅನ್ನು ನವೀಕರಿಸಿ</p>
+        </div>
+    </div>
+
+    <div class="card helpline-section">
+        <div class="helpline-title" id="helplineTitle">📞 ಸಹಾಯ ಸಂಖ್ಯೆಗಳು</div>
+        <div class="helpline-subtitle" id="helplineSubtitle">ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ</div>
+
+        <div class="helpline-container">
+            <div class="helpline-item red-border">
+                <div class="helpline-info">
+                    <div class="helpline-name" id="c1name">Forest Department</div>
+                    <div class="helpline-name-kn" id="c1kname">ಅರಣ್ಯ ಇಲಾಖೆ</div>
+                    <div class="helpline-number" id="c1num">+91XXXXXXXXXX</div>
+                </div>
+                <a class="call-btn red-btn" href="tel:+91XXXXXXXXXX" id="c1btn">
+                    <span>📞</span><span id="c1label">Call</span>
+                </a>
+            </div>
+
+            <div class="helpline-item blue-border">
+                <div class="helpline-info">
+                    <div class="helpline-name" id="c2name">Police Control Room</div>
+                    <div class="helpline-name-kn" id="c2kname">ಪೊಲೀಸ್ ನಿಯಂತ್ರಣ ಕಕ್ಷೆ</div>
+                    <div class="helpline-number" id="c2num">100</div>
+                </div>
+                <a class="call-btn blue-btn" href="tel:100">
+                    <span>📞</span><span id="c2label">Call</span>
+                </a>
+            </div>
+
+            <div class="helpline-item">
+                <div class="helpline-info">
+                    <div class="helpline-name" id="c3name">Gram Panchayat</div>
+                    <div class="helpline-name-kn" id="c3kname">ಗ್ರಾಮ ಪಂಚಾಯತ್</div>
+                    <div class="helpline-number" id="c3num">+91XXXXXXXXXX</div>
+                </div>
+                <a class="call-btn" href="tel:+91XXXXXXXXXX">
+                    <span>📞</span><span id="c3label">Call</span>
+                </a>
+            </div>
+
+            <div class="helpline-item orange-border">
+                <div class="helpline-info">
+                    <div class="helpline-name" id="c4name">Wildlife Warden</div>
+                    <div class="helpline-name-kn" id="c4kname">ವನ್ಯಜೀವಿ ರಕ್ಷಕ</div>
+                    <div class="helpline-number" id="c4num">+91XXXXXXXXXX</div>
+                </div>
+                <a class="call-btn orange-btn" href="tel:+91XXXXXXXXXX">
+                    <span>📞</span><span id="c4label">Call</span>
+                </a>
+            </div>
+
+            <div class="helpline-item red-border">
+                <div class="helpline-info">
+                    <div class="helpline-name" id="c5name">Emergency / Ambulance</div>
+                    <div class="helpline-name-kn" id="c5kname">ತುರ್ತು / ಆಂಬ್ಯುಲೆನ್ಸ್</div>
+                    <div class="helpline-number" id="c5num">108</div>
+                </div>
+                <a class="call-btn red-btn" href="tel:108">
+                    <span>📞</span><span id="c5label">Call</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p id="footerText">© 2025 ಆನೆ ಪತ್ತೆ ವ್ಯವಸ್ಥೆ</p>
+    </div>
+</div>
+
+<script>
+    const CHANNEL_ID = '3220727';
+    const UPDATE_INTERVAL = 15000;
+    let currentLang = 'kn';
+    let lastAlertTime = 0;
+
+    const translations = {
+        kn: {
+            mainTitle: '🐘 ಆನೆ ಪತ್ತೆ ವ್ಯವಸ್ಥೆ',
+            subtitle: 'ನಿಮ್ಮ ಹೊಲದ ಸುರಕ್ಷತೆ',
+            langBtn: 'Switch to English',
+            alertTitle: '⚠️ ಎಚ್ಚರಿಕೆ! ⚠️',
+            alertText: 'ಆನೆ ಹತ್ತಿರ ಬಂದಿದೆ!',
+            loadingText: 'ಡೇಟಾ ಲೋಡ್ ಆಗುತ್ತಿದೆ...',
+            statusTitle: 'ಪರಿಸ್ಥಿತಿ',
+            statusSafe: 'ಸುರಕ್ಷಿತ - ಆನೆ ಇಲ್ಲ',
+            statusDanger: 'ಅಪಾಯ! ಆನೆ ಕಂಡುಬಂದಿದೆ!',
+            distanceTitle: 'ದೂರ',
+            distanceUnit: 'ಸೆಂಟಿಮೀಟರ್',
+            systemLabel: 'ವ್ಯವಸ್ಥೆ',
+            systemActive: 'ಸಕ್ರಿಯ',
+            systemOff: 'ಆಫ್',
+            updateLabel: 'ಕೊನೆಯ ನವೀಕರಣ',
+            locationLabel: 'ಸ್ಥಳ',
+            locationValue: 'ಹೊಲದ ಸುತ್ತಲೂ',
+            footerText: '© 2025 ಆನೆ ಪತ್ತೆ ವ್ಯವಸ್ಥೆ',
+            configText: '⚙️ ದಯವಿಟ್ಟು Channel ID ಅನ್ನು ನವೀಕರಿಸಿ',
+            helplineTitle: '📞 ಸಹಾಯ ಸಂಖ್ಯೆಗಳು',
+            helplineSubtitle: 'ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ ತಕ್ಷಣ ಕರೆ ಮಾಡಿ',
+            callLabel: 'ಕರೆ ಮಾಡಿ'
+        },
+        en: {
+            mainTitle: '🐘 Elephant Detection System',
+            subtitle: 'Protecting Your Farm',
+            langBtn: 'ಕನ್ನಡಕ್ಕೆ ಬದಲಾಯಿಸಿ',
+            alertTitle: '⚠️ WARNING! ⚠️',
+            alertText: 'Elephant Detected Nearby!',
+            loadingText: 'Loading data...',
+            statusTitle: 'Status',
+            statusSafe: 'Safe - No Elephant',
+            statusDanger: 'Danger! Elephant Detected!',
+            distanceTitle: 'Distance',
+            distanceUnit: 'Centimeters',
+            systemLabel: 'System',
+            systemActive: 'Active',
+            systemOff: 'Off',
+            updateLabel: 'Last Update',
+            locationLabel: 'Location',
+            locationValue: 'Farm Perimeter',
+            footerText: '© 2025 Elephant Detection System',
+            configText: '⚙️ Please update Channel ID in code',
+            helplineTitle: '📞 Helpline Contacts',
+            helplineSubtitle: 'Call immediately in case of emergency',
+            callLabel: 'Call'
+        }
+    };
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'kn' ? 'en' : 'kn';
+        updateText();
+    }
+
+    function updateText() {
+        const t = translations[currentLang];
+        document.getElementById('mainTitle').textContent = t.mainTitle;
+        document.getElementById('subtitle').textContent = t.subtitle;
+        document.getElementById('langBtn').textContent = t.langBtn;
+        document.getElementById('alertTitle').textContent = t.alertTitle;
+        document.getElementById('alertText').textContent = t.alertText;
+        document.getElementById('loadingText').textContent = t.loadingText;
+        document.getElementById('statusTitle').textContent = t.statusTitle;
+        document.getElementById('distanceTitle').textContent = t.distanceTitle;
+        document.getElementById('distanceUnit').textContent = t.distanceUnit;
+        document.getElementById('systemLabel').textContent = t.systemLabel;
+        document.getElementById('updateLabel').textContent = t.updateLabel;
+        document.getElementById('locationLabel').textContent = t.locationLabel;
+        document.getElementById('locationValue').textContent = t.locationValue;
+        document.getElementById('footerText').textContent = t.footerText;
+        document.getElementById('configText').textContent = t.configText;
+        document.getElementById('helplineTitle').textContent = t.helplineTitle;
+        document.getElementById('helplineSubtitle').textContent = t.helplineSubtitle;
+        ['c1label','c2label','c3label','c4label','c5label'].forEach(id => {
+            document.getElementById(id).textContent = t.callLabel;
+        });
+    }
+
+    function playAlert() {
+        if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKjj8LVjHAU5k9jyyXksBS1+zPLaizsKE1y16+ulVBEL');
+        audio.play().catch(e => {});
+    }
+
+    async function fetchData() {
+        if (CHANNEL_ID === '0000000') {
+            document.getElementById('configMsg').style.display = 'block';
+            return;
+        }
+        try {
+            const response = await fetch(`https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=1`);
+            const data = await response.json();
+            if (data.feeds && data.feeds.length > 0) {
+                updateDashboard(data.feeds[0]);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('configMsg').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function updateDashboard(feed) {
+        const t = translations[currentLang];
+        const detected = parseInt(feed.field1) === 1;
+        const distance = parseFloat(feed.field2);
+        const systemOn = parseInt(feed.field3) === 1;
+
+        const icon = document.getElementById('elephantIcon');
+        const statusText = document.getElementById('statusText');
+        const alertBox = document.getElementById('alertBox');
+
+        if (detected) {
+            icon.textContent = '🐘';
+            icon.style.color = '#ff4444';
+            statusText.textContent = t.statusDanger;
+            statusText.className = 'status-text status-danger';
+            alertBox.classList.add('active');
+            const now = Date.now();
+            if (now - lastAlertTime > 60000) { playAlert(); lastAlertTime = now; }
+        } else {
+            icon.textContent = '✅';
+            icon.style.color = '#4CAF50';
+            statusText.textContent = t.statusSafe;
+            statusText.className = 'status-text status-safe';
+            alertBox.classList.remove('active');
+        }
+
+        document.getElementById('distanceValue').textContent =
+            (distance > 0 && distance < 400) ? Math.round(distance) : '--';
+        document.getElementById('systemValue').textContent = systemOn ? t.systemActive : t.systemOff;
+        const time = new Date(feed.created_at);
+        document.getElementById('updateValue').textContent = time.toLocaleTimeString();
+    }
+
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    updateText();
+    fetchData();
+    setInterval(fetchData, UPDATE_INTERVAL);
+</script>
+</body>
+</html>
