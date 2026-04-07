@@ -789,6 +789,14 @@
         </div>
     </div>
 
+    <!-- GOOGLE MAPS SECTION -->
+    <div class="container">
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+            <h3 id="mapTitle" style="color: white; text-align: center; margin-bottom: 12px; font-size: 1.2em;">📍 Farm Detection Zone</h3>
+            <div id="map" style="width: 100%; height: 300px; border-radius: 12px; border: 2px solid #4CAF50;"></div>
+        </div>
+    </div>
+
     <div class="footer">
         <p id="footerText">© 2025 ಆನೆ ಪತ್ತೆ ವ್ಯವಸ್ಥೆ</p>
     </div>
@@ -799,6 +807,44 @@
     const UPDATE_INTERVAL = 15000;
     let currentLang = 'kn';
     let lastAlertTime = 0;
+    let map; // Google Map variable
+
+    // GOOGLE MAPS INITIALIZATION
+    function initMap() {
+        // Change these coordinates to YOUR farm location
+        const farmLocation = { lat: 13.0827, lng: 80.2707 };
+        
+        const mapOptions = {
+            zoom: 15,
+            center: farmLocation,
+            mapTypeControl: true,
+            fullscreenControl: false,
+            streetViewControl: false,
+            zoomControl: true
+        };
+        
+        map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+        // Add farm location marker
+        const marker = new google.maps.Marker({
+            position: farmLocation,
+            map: map,
+            title: 'Farm Location',
+            icon: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
+        });
+
+        // Add click info
+        marker.addListener('click', () => {
+            alert('Farm Location: ' + farmLocation.lat + ', ' + farmLocation.lng);
+        });
+    }
+
+    // Initialize map after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMap);
+    } else {
+        initMap();
+    }
 
     function openModal() {
         document.getElementById('articleModal').classList.add('open');
@@ -962,5 +1008,9 @@
     fetchData();
     setInterval(fetchData, UPDATE_INTERVAL);
 </script>
+
+<!-- GOOGLE MAPS API - Replace YOUR_API_KEY with your actual API key from Google Cloud -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2w9ZEc6cLk9at0dq0JwD-FY8G2PDlFFI&libraries=marker"></script>
+
 </body>
 </html>
