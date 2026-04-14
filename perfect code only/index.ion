@@ -1,0 +1,342 @@
+/*
+ * ==========================================
+ * ELEPHANT DETECTION SYSTEM - ESP8266 CODE
+ * ==========================================
+ * 
+ * Author: IoT Farm Protection Team
+ * Date: 2025
+ * 
+ * Description:
+ * Real-time elephant detection using HC-SR04 ultrasonic sensor
+ * Data transmitted to ThingSpeak IoT cloud platform
+ * 
+ * Hardware:
+ * - ESP8266 NodeMCU / Wemos D1 Mini
+ * - HC-SR04 Ultrasonic Sensor
+ * - 5V Power Supply
+ * 
+ * Libraries Required:
+ * - ESP8266WiFi (Built-in)
+ * - ESP8266HTTPClient (Built-in)
+ * 
+ * ==========================================
+ */
+
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+
+// ==================== CONFIGURATION ====================
+// WiFi Credentials - CHANGE THESE!
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+// ThingSpeak Configuration
+const char* server = "http://api.thingspeak.com";
+const String apiKey = "xxxxxxxxxxxxxxxxx";      // Write API Key (from HTML file)
+const String channelID = "xxxxxxx";             // Channel ID (from HTML file)
+
+// Sensor Pins Configuration
+// HC-SR04 Ultrasonic Sensor pins
+const int TRIG_PIN = D5;  // GPIO14 - Trigger pin (send signal)
+const int ECHO_PIN = D6;  // GPIO12 - Echo pin (receive signal)
+
+// System Parameters
+const int DISTANCE_THRESHOLD = 200;  // Elephant detected if < 200 cm
+const int SENSOR_READ_DELAY = 500;   // Read sensor every 500ms
+const int THINGSPEAK_UPDATE = 5000;  // Update ThingSpeak every 5 seconds
+const int MAX_SENSOR_DISTANCE = 400; // Maximum valid sensor reading (cm)
+
+// ==================== GLOBAL VARIABLES ====================
+long lastDistanceReading = 0;        // Timestamp of last sensor reading
+long lastThingSpeakUpdate = 0;       // Timestamp of last cloud update
+bool elephantDetected = false;       // Current elephant detection state
+int systemActive = 1;                // System active flag (1=Active, 0=Off)
+int consecutiveDetections = 0;       // Counter for confirming detection
+long currentDistance = 0;             // Latest distance reading
+
+// ==================== SETUP FUNCTION ====================
+void setup() {
+  // Initialize Serial Communication
+  Serial.begin(115200);
+  delay(1000);
+  
+  // Welcome Message
+  Serial.println("\n\n");
+  Serial.println("╔════════════════════════════════════════════╗");
+  Serial.println("║   🐘 ELEPHANT DETECTION SYSTEM v1.0        ║");
+  Serial.println("║   IoT Farm Protection                      ║");
+  Serial.println("╚════════════════════════════════════════════╝");
+  Serial.println();
+  
+  // Initialize GPIO Pins
+  pinMode(TRIG_PIN, OUTPUT);           // Trigger as OUTPUT
+  pinMode(ECHO_PIN, INPUT);            // Echo as INPUT
+  
+  // Set initial pin states
+  digitalWrite(TRIG_PIN, LOW);
+  
+  Serial.println("[INIT] GPIO Pins configured");
+  Serial.print("[INIT] TRIG_PIN: ");
+  Serial.println(TRIG_PIN);
+  Serial.print("[INIT] ECHO_PIN: ");
+  Serial.println(ECHO_PIN);
+  
+  // Connect to WiFi
+  Serial.println("\n[WIFI] Attempting to connect...");
+  connectToWiFi();
+  
+  Serial.println("\n[SYSTEM] Initialization complete!");
+  Serial.println("[SYSTEM] Waiting for elephant detection...\n");
+}
+
+// ==================== MAIN LOOP ====================
+void loop() {
+  // Check WiFi Connection Status
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[WIFI] Connection lost. Attempting to reconnect...");
+    connectToWiFi();
+  }
+  
+  // ===== SENSOR READING LOOP =====
+  if (millis() - lastDistanceReading >= SENSOR_READ_DELAY) {
+    // Read ultrasonic sensor
+    currentDistance = measureDistance();
+    
+    // Print distance (only valid readings)
+    if (currentDistance > 0) {
+      Serial.print("[SENSOR] Distance: ");
+      Serial.print(currentDistance);
+      Serial.println(" cm");
+      
+      // Check if elephant is detected
+      if (currentDistance < DISTANCE_THRESHOLD && currentDistance > 0) {
+        consecutiveDetections++;
+        
+        // Confirm detection with 2 consecutive readings
+        if (consecutiveDetections >= 2) {
+          if (!elephantDetected) {
+            elephantDetected = true;
+            Serial.println("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️");
+            Serial.println("⚠️  ALERT: ELEPHANT DETECTED!!!  ⚠️");
+            Serial.println("⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️");
+            Serial.print("   Distance: ");
+            Serial.print(currentDistance);
+            Serial.println(" cm");
+          }
+        }
+      } else {
+        // Elephant not detected
+        if (elephantDetected) {
+          Serial.println("✓ Elephant moved away - System is SAFE");
+        }
+        elephantDetected = false;
+        consecutiveDetections = 0;
+      }
+    } else {
+      Serial.println("[SENSOR] Invalid reading (timeout)");
+    }
+    
+    lastDistanceReading = millis();
+  }
+  
+  // ===== THINGSPEAK UPDATE LOOP =====
+  if (millis() - lastThingSpeakUpdate >= THINGSPEAK_UPDATE) {
+    if (WiFi.status() == WL_CONNECTED) {
+      updateThingSpeak(
+        elephantDetected ? 1 : 0,  // Field 1: Detected (0=No, 1=Yes)
+        currentDistance,            // Field 2: Distance (cm)
+        systemActive                // Field 3: System Status (0=Off, 1=On)
+      );
+    } else {
+      Serial.println("[THINGSPEAK] WiFi not connected - skipping update");
+    }
+    
+    lastThingSpeakUpdate = millis();
+  }
+  
+  delay(100);  // Small delay to prevent overwhelming the loop
+}
+
+// ==================== FUNCTION: MEASURE DISTANCE ====================
+/*
+ * Measures distance using HC-SR04 ultrasonic sensor
+ * 
+ * How it works:
+ * 1. Send 10μs pulse on TRIG pin
+ * 2. Measure pulse width on ECHO pin
+ * 3. Calculate distance using: distance = (time / 2) * speed_of_sound
+ * 4. Speed of sound in air ≈ 343 m/s ≈ 0.0343 cm/μs
+ * 
+ * Returns: Distance in centimeters (0 if error)
+ */
+long measureDistance() {
+  // Step 1: Send trigger pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  // Step 2: Measure echo pulse duration
+  // pulseIn returns microseconds
+  // 30000μs timeout ≈ 5 meters max distance
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+  
+  // Step 3: Calculate distance
+  // Distance (cm) = (duration in μs / 29.1)
+  // This accounts for: duration/2 (round trip) * speed_of_sound
+  long distance = duration / 29.1 / 2;
+  
+  // Step 4: Validate reading
+  if (distance < 0 || distance > MAX_SENSOR_DISTANCE || duration == 0) {
+    return 0;  // Invalid reading
+  }
+  
+  return distance;
+}
+
+// ==================== FUNCTION: CONNECT TO WiFi ====================
+/*
+ * Establishes WiFi connection
+ * Maximum 30 attempts with 500ms delay between attempts
+ */
+void connectToWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  
+  int attempts = 0;
+  const int maxAttempts = 30;
+  
+  Serial.print("[WIFI] Connecting to: ");
+  Serial.println(ssid);
+  
+  while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  Serial.println();
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("[WIFI] ✓ Successfully connected!");
+    Serial.print("[WIFI] IP Address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("[WIFI] Signal Strength: ");
+    Serial.print(WiFi.RSSI());
+    Serial.println(" dBm");
+  } else {
+    Serial.println("[WIFI] ✗ Connection failed!");
+    Serial.println("[WIFI] Please check WiFi credentials");
+    Serial.println("[WIFI] Retrying in 10 seconds...");
+  }
+}
+
+// ==================== FUNCTION: UPDATE THINGSPEAK ====================
+/*
+ * Sends sensor data to ThingSpeak IoT platform
+ * 
+ * Parameters:
+ *   - detected: 0=No elephant, 1=Elephant detected
+ *   - distance: Distance in centimeters
+ *   - systemOn: 0=System off, 1=System active
+ * 
+ * Field Mapping:
+ *   field1 = Elephant Detected (0/1)
+ *   field2 = Distance (cm)
+ *   field3 = System Status (0/1)
+ */
+void updateThingSpeak(int detected, long distance, int systemOn) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[THINGSPEAK] ✗ WiFi not connected!");
+    return;
+  }
+  
+  HTTPClient http;
+  
+  // Build ThingSpeak update URL
+  String url = String(server) + "/update?api_key=" + apiKey;
+  url += "&field1=" + String(detected);         // Elephant Detected
+  url += "&field2=" + String(distance);         // Distance
+  url += "&field3=" + String(systemOn);         // System Status
+  
+  // Show what we're sending
+  Serial.print("[THINGSPEAK] Updating... ");
+  
+  // Send HTTP GET request
+  http.begin(url);
+  int httpCode = http.GET();
+  
+  if (httpCode == HTTP_CODE_OK) {
+    String response = http.getString();
+    Serial.print("✓ Success (Code: ");
+    Serial.print(httpCode);
+    Serial.println(")");
+    
+    // Show what was sent
+    Serial.print("              Fields: Detected=");
+    Serial.print(detected);
+    Serial.print(", Distance=");
+    Serial.print(distance);
+    Serial.print("cm, System=");
+    Serial.println(systemOn);
+  } else {
+    Serial.print("✗ Failed (Code: ");
+    Serial.print(httpCode);
+    Serial.println(")");
+  }
+  
+  http.end();
+}
+
+// ==================== ADDITIONAL FUNCTIONS ====================
+
+/*
+ * Optional: Print system status every 30 seconds
+ */
+void printSystemStatus() {
+  static long lastPrint = 0;
+  
+  if (millis() - lastPrint > 30000) {
+    Serial.println("\n╔══════════════════════════════════════╗");
+    Serial.println("║        SYSTEM STATUS REPORT          ║");
+    Serial.println("╠══════════════════════════════════════╣");
+    Serial.print("║ WiFi: ");
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("CONNECTED");
+    } else {
+      Serial.println("DISCONNECTED");
+    }
+    Serial.print("║ Elephant Status: ");
+    Serial.println(elephantDetected ? "DETECTED ⚠️" : "SAFE ✓");
+    Serial.print("║ Last Distance: ");
+    Serial.print(currentDistance);
+    Serial.println(" cm");
+    Serial.print("║ System Active: ");
+    Serial.println(systemActive ? "YES" : "NO");
+    Serial.println("╚══════════════════════════════════════╝\n");
+    
+    lastPrint = millis();
+  }
+}
+
+/*
+ * ==================== END OF CODE ====================
+ * 
+ * UPLOAD INSTRUCTIONS:
+ * 1. Install Arduino IDE
+ * 2. Add ESP8266 board support via Boards Manager
+ * 3. Select Board: NodeMCU 1.0 (ESP-12E Module)
+ * 4. Select Port: COM port where ESP8266 is connected
+ * 5. Update WiFi credentials (lines 20-21)
+ * 6. Click Upload
+ * 7. Monitor serial output at 115200 baud
+ * 
+ * TROUBLESHOOTING:
+ * - Check serial monitor (Tools > Serial Monitor)
+ * - Verify WiFi SSID and Password
+ * - Confirm sensor wiring (TRIG=D5, ECHO=D6)
+ * - Ensure ThingSpeak API key is correct
+ * 
+ * ==================== END OF CODE ====================
+ */
