@@ -4,7 +4,7 @@
 # Elephant Monitor Website
 
 A web-based monitoring platform designed to help track and manage elephant movement, monitor activities, and improve wildlife conservation efforts through real-time insights and reporting.
-
+direct link: https://elephant-monitor.vercel.app
 ---
 
 ## 📌 Project Overview
